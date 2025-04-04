@@ -1,5 +1,6 @@
 import cv2
 import mediapipe as mp
+import numpy as np
 from mediapipe import solutions
 from mediapipe.python.solutions import drawing_utils
 from mediapipe.framework.formats import landmark_pb2
@@ -22,29 +23,52 @@ options = FaceLandmarkerOptions(
     running_mode=VisionRunningMode.IMAGE
 )
 
-# Initialise landmarker
-with FaceLandmarker.create_from_options(options) as landmarker:
+def draw_landmarks_on_image(rgb_image, detection_result):
+  """ Code used from https://github.com/google-ai-edge/mediapipe-samples/blob/main/examples/face_landmarker/python/%5BMediaPipe_Python_Tasks%5D_Face_Landmarker.ipynb """
 
-    results = landmarker.detect(mp_image)
-    face_landmarks_list = results.face_landmarks
-    
-    """ Code used from https://github.com/google-ai-edge/mediapipe-samples/blob/main/examples/face_landmarker/python/%5BMediaPipe_Python_Tasks%5D_Face_Landmarker.ipynb"""
-    for idx in range(len(face_landmarks_list)):
-        face_landmarks = face_landmarks_list[idx]
+  face_landmarks_list = detection_result.face_landmarks
+  annotated_image = np.copy(rgb_image)
 
-        # Draw the face landmarks.
-        face_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
-        face_landmarks_proto.landmark.extend([
-            landmark_pb2.NormalizedLandmark(x=landmark.x, y=landmark.y, z=landmark.z) for landmark in face_landmarks
-        ])
+  # Loop through the detected faces to visualize.
+  for idx in range(len(face_landmarks_list)):
+    face_landmarks = face_landmarks_list[idx]
 
-        solutions.drawing_utils.draw_landmarks(
-        image=cv_image,
+    # Draw the face landmarks.
+    face_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
+    face_landmarks_proto.landmark.extend([
+      landmark_pb2.NormalizedLandmark(x=landmark.x, y=landmark.y, z=landmark.z) for landmark in face_landmarks
+    ])
+
+    solutions.drawing_utils.draw_landmarks(
+        image=annotated_image,
         landmark_list=face_landmarks_proto,
         connections=mp.solutions.face_mesh.FACEMESH_TESSELATION,
         landmark_drawing_spec=None,
         connection_drawing_spec=mp.solutions.drawing_styles
         .get_default_face_mesh_tesselation_style())
+    solutions.drawing_utils.draw_landmarks(
+        image=annotated_image,
+        landmark_list=face_landmarks_proto,
+        connections=mp.solutions.face_mesh.FACEMESH_CONTOURS,
+        landmark_drawing_spec=None,
+        connection_drawing_spec=mp.solutions.drawing_styles
+        .get_default_face_mesh_contours_style())
+    solutions.drawing_utils.draw_landmarks(
+        image=annotated_image,
+        landmark_list=face_landmarks_proto,
+        connections=mp.solutions.face_mesh.FACEMESH_IRISES,
+          landmark_drawing_spec=None,
+          connection_drawing_spec=mp.solutions.drawing_styles
+          .get_default_face_mesh_iris_connections_style())
+
+  return annotated_image
+
+# Initialise landmarker
+with FaceLandmarker.create_from_options(options) as landmarker:
+
+    results = landmarker.detect(mp_image)
+    face_landmarks_list = results.face_landmarks
+    cv_image = draw_landmarks_on_image(cv_image, results)
     
     cv2.imshow('Image', cv_image)
     cv2.waitKey(0)
