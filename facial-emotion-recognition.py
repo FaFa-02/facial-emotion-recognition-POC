@@ -1,13 +1,14 @@
 import cv2
 import mediapipe as mp
+import numpy as np
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 # def model path
 model_path = 'C:\\Users\\fabot\\Downloads\\face_landmarker.task'
-
 # Read Images
-image = mp.Image.create_from_file('smiling-woman.jpg')
+mp_image = mp.Image.create_from_file('smiling-woman.jpg')
+cv_image = cv2.imread('smiling-woman.jpg')
 
 # Set configuration options
 BaseOptions = mp.tasks.BaseOptions
@@ -21,4 +22,7 @@ options = FaceLandmarkerOptions(
 
 # Initialise landmarker
 with FaceLandmarker.create_from_options(options) as landmarker:
-    face_landmarker_result = landmarker.detect(image)
+    face_landmarker_result = landmarker.detect(mp_image)
+
+    for landmark in face_landmarker_result.face_landmarks[0]:
+        print(landmark)
