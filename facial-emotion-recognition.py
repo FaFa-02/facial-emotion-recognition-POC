@@ -23,6 +23,7 @@ options = FaceLandmarkerOptions(
     running_mode=VisionRunningMode.IMAGE
 )
 
+# Draws landmarks ontop of the image
 def draw_landmarks_on_image(rgb_image, detection_result):
   """ Code used from https://github.com/google-ai-edge/mediapipe-samples/blob/main/examples/face_landmarker/python/%5BMediaPipe_Python_Tasks%5D_Face_Landmarker.ipynb """
 
