@@ -67,8 +67,9 @@ def draw_landmarks_on_image(rgb_image, detection_result):
 with FaceLandmarker.create_from_options(options) as landmarker:
 
     results = landmarker.detect(mp_image)
-    face_landmarks_list = results.face_landmarks
-    cv_image = draw_landmarks_on_image(cv_image, results)
-    
-    cv2.imshow('Image', cv_image)
+
+    # Annotated version of original image
+    annotated_image = draw_landmarks_on_image(cv_image, results)
+
+    cv2.imshow('Image', annotated_image)
     cv2.waitKey(0)
