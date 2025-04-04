@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import sys
 from mediapipe import solutions
 from mediapipe.python.solutions import drawing_utils
 from mediapipe.framework.formats import landmark_pb2
@@ -8,19 +9,27 @@ from mediapipe.framework.formats import landmark_pb2
 # def model path
 model_path = 'C:\\Users\\fabot\\Downloads\\face_landmarker.task'
 
+"""
 # Read Images
 mp_image = mp.Image.create_from_file('smiling-woman.jpg')
 cv_image = cv2.imread('smiling-woman.jpg')
-height, width, _ = cv_image.shape
+"""
 
 # Set configuration options
 BaseOptions = mp.tasks.BaseOptions
 FaceLandmarker = mp.tasks.vision.FaceLandmarker
 FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
+FaceLandmarkerResult = mp.tasks.vision.FaceLandmarkerResult
 VisionRunningMode = mp.tasks.vision.RunningMode
+
+# Create a face landmarker instance with the live stream mode:
+def print_result(result: FaceLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
+    print('face landmarker result: {}'.format(result))
+
 options = FaceLandmarkerOptions(
     base_options=BaseOptions(model_asset_path=model_path),
-    running_mode=VisionRunningMode.IMAGE
+    running_mode=VisionRunningMode.LIVE_STREAM,
+    result_callback=print_result
 )
 
 # Draws landmarks ontop of the image
@@ -64,13 +73,29 @@ def draw_landmarks_on_image(rgb_image, detection_result):
 
   return annotated_image
 
+cap = cv2.VideoCapture(0)
+
 # Initialise landmarker
 with FaceLandmarker.create_from_options(options) as landmarker:
+    
 
-    results = landmarker.detect(mp_image)
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
 
-    # Annotated version of original image
-    annotated_image = draw_landmarks_on_image(cv_image, results)
+        #results = landmarker.detect(mp_image)
+        results = landmarker.detect_async(mp_image, landmarker._result_callback)
 
-    cv2.imshow('Image', annotated_image)
-    cv2.waitKey(0)
+        # Annotated version of original image
+        annotated_image = draw_landmarks_on_image(mp_image, results)
+
+        cv2.imshow('Video capture', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    #cv2.imshow('Image', annotated_image)
+    #cv2.waitKey(0)
