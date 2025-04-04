@@ -1,2 +1,2 @@
 # facial-emotion-recognition-POC
-Proof of concept programming exploring mediapipe and OpenCV packages for facial recognition.
+Proof of concept program exploring mediapipe and OpenCV packages for facial recognition. Focus mainly on capturing emotions from faces in images and then move on to videos.
