@@ -1,14 +1,16 @@
 import cv2
 import mediapipe as mp
-import numpy as np
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
+from mediapipe import solutions
+from mediapipe.python.solutions import drawing_utils
+from mediapipe.framework.formats import landmark_pb2
 
 # def model path
 model_path = 'C:\\Users\\fabot\\Downloads\\face_landmarker.task'
+
 # Read Images
 mp_image = mp.Image.create_from_file('smiling-woman.jpg')
 cv_image = cv2.imread('smiling-woman.jpg')
+height, width, _ = cv_image.shape
 
 # Set configuration options
 BaseOptions = mp.tasks.BaseOptions
@@ -22,7 +24,27 @@ options = FaceLandmarkerOptions(
 
 # Initialise landmarker
 with FaceLandmarker.create_from_options(options) as landmarker:
-    face_landmarker_result = landmarker.detect(mp_image)
 
-    for landmark in face_landmarker_result.face_landmarks[0]:
-        print(landmark)
+    results = landmarker.detect(mp_image)
+    face_landmarks_list = results.face_landmarks
+    
+    """ Code used from https://github.com/google-ai-edge/mediapipe-samples/blob/main/examples/face_landmarker/python/%5BMediaPipe_Python_Tasks%5D_Face_Landmarker.ipynb"""
+    for idx in range(len(face_landmarks_list)):
+        face_landmarks = face_landmarks_list[idx]
+
+        # Draw the face landmarks.
+        face_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
+        face_landmarks_proto.landmark.extend([
+            landmark_pb2.NormalizedLandmark(x=landmark.x, y=landmark.y, z=landmark.z) for landmark in face_landmarks
+        ])
+
+        solutions.drawing_utils.draw_landmarks(
+        image=cv_image,
+        landmark_list=face_landmarks_proto,
+        connections=mp.solutions.face_mesh.FACEMESH_TESSELATION,
+        landmark_drawing_spec=None,
+        connection_drawing_spec=mp.solutions.drawing_styles
+        .get_default_face_mesh_tesselation_style())
+    
+    cv2.imshow('Image', cv_image)
+    cv2.waitKey(0)
