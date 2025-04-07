@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import sys
+import time
 from mediapipe import solutions
 from mediapipe.python.solutions import drawing_utils
 from mediapipe.framework.formats import landmark_pb2
@@ -24,7 +25,10 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 
 # Create a face landmarker instance with the live stream mode:
 def print_result(result: FaceLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
-    print('face landmarker result: {}'.format(result))
+    #print('face landmarker result: {}'.format(result))
+    print(type(result.face_landmarks))
+    return result.face_landmarks
+    #return result
 
 options = FaceLandmarkerOptions(
     base_options=BaseOptions(model_asset_path=model_path),
@@ -77,25 +81,24 @@ cap = cv2.VideoCapture(0)
 
 # Initialise landmarker
 with FaceLandmarker.create_from_options(options) as landmarker:
-    
 
-    while cap.isOpened():
+    while True:
         ret, frame = cap.read()
-        if not ret:
-            break
-        
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
+        height, width, _ = frame.shape
+        mp_frame = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
+        #rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        #results = landmarker.detect(mp_image)
-        results = landmarker.detect_async(mp_image, landmarker._result_callback)
+        landmarker.detect_async(mp_frame, int(round(time.time() * 1000)))
+        print(type(options.result_callback))
+
+        #sys.exit()
 
         # Annotated version of original image
-        annotated_image = draw_landmarks_on_image(mp_image, results)
+        sys.exit()
+        annotated_image = draw_landmarks_on_image(frame, options.result_callback)
 
-        cv2.imshow('Video capture', frame)
-
+        cv2.imshow('Video', frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    #cv2.imshow('Image', annotated_image)
-    #cv2.waitKey(0)
+
