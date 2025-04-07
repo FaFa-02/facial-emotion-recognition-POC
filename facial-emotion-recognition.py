@@ -20,20 +20,11 @@ cv_image = cv2.imread('smiling-woman.jpg')
 BaseOptions = mp.tasks.BaseOptions
 FaceLandmarker = mp.tasks.vision.FaceLandmarker
 FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
-FaceLandmarkerResult = mp.tasks.vision.FaceLandmarkerResult
 VisionRunningMode = mp.tasks.vision.RunningMode
-
-# Create a face landmarker instance with the live stream mode:
-def print_result(result: FaceLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
-    #print('face landmarker result: {}'.format(result))
-    print(type(result.face_landmarks))
-    return result.face_landmarks
-    #return result
 
 options = FaceLandmarkerOptions(
     base_options=BaseOptions(model_asset_path=model_path),
-    running_mode=VisionRunningMode.LIVE_STREAM,
-    result_callback=print_result
+    running_mode=VisionRunningMode.VIDEO
 )
 
 # Draws landmarks ontop of the image
@@ -77,28 +68,24 @@ def draw_landmarks_on_image(rgb_image, detection_result):
 
   return annotated_image
 
-cap = cv2.VideoCapture(0)
-
 # Initialise landmarker
 with FaceLandmarker.create_from_options(options) as landmarker:
 
+    cap = cv2.VideoCapture("stressed_facial_test.mp4")
+    fps = cap.get(cv2.CAP_PROP_FPS)
+
     while True:
+      
+        # Capture & convert frames
         ret, frame = cap.read()
-        height, width, _ = frame.shape
+        frame = cv2.resize(frame, (900,500), interpolation=cv2.INTER_AREA)
         mp_frame = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
-        #rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        landmarker.detect_async(mp_frame, int(round(time.time() * 1000)))
-        print(type(options.result_callback))
-
-        #sys.exit()
+        result = landmarker.detect_for_video(mp_frame, int(round(time.time() * 1000)))
 
         # Annotated version of original image
-        sys.exit()
-        annotated_image = draw_landmarks_on_image(frame, options.result_callback)
+        annotated_image = draw_landmarks_on_image(frame, result)
 
-        cv2.imshow('Video', frame)
+        cv2.imshow('Video', annotated_image)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
-
